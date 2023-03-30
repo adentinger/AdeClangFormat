@@ -23,7 +23,7 @@ cmake -DADE_CLANG_FORMAT:STRING='clang-format;--style=file:.clang-format' <other
 
 ## Installation
 
-First run these commands...
+Requires CMake >= 3.19. First run these commands...
 
 ```bash
 git clone https://github.com/adentinger/AdeClangFormat && \
@@ -31,7 +31,9 @@ git clone https://github.com/adentinger/AdeClangFormat && \
     mkdir build && \
     cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install && \
     cmake --build build && \
-    ctest --test-dir build && \
+    cd build && \
+    ctest && \
+    cd .. && \
     cmake --install build
 ```
 
