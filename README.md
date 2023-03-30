@@ -1,0 +1,2 @@
+# AdeClangFormat
+
