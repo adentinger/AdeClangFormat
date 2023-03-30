@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-cmake_minimum_required(VERSION 3.25)
+# CMake 3.19 because of configure_file() with USE_SOURCE_PERMISSIONS.
+cmake_minimum_required(VERSION 3.19)
 
 project(AdeClangFormat
   VERSION 1.0
