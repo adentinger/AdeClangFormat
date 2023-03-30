@@ -37,7 +37,7 @@ git clone https://github.com/adentinger/AdeClangFormat && \
     cmake --install build
 ```
 
-...then either add the created `install/` directory into your CMake build's `CMAKE_PREFIX_PATH`, or copy the contents of the `install/` directory to a location where [`find_package()`](https://cmake.org/cmake/help/latest/command/find_package.html) will find it.
+...then either add the created `install/` directory into your CMake build's `CMAKE_PREFIX_PATH`, or copy the contents of the `install/` directory to a location where [`find_package()`](https://cmake.org/cmake/help/latest/command/find_package.html) will find them.
 
 ## Full usage
 
@@ -64,11 +64,11 @@ The options are:
 
 - `TARGETS`: The targets whose sources to setup `clang-format` for. Must be existing targets.
 
-- `BUILD_DEPENDS`: Force `clang-format`'s check to be run on the target's sources when the target is built, regardless of the setting of `ADE_CLANG_FORMAT_BUILD_DEPENDS` cache variable.
+- `BUILD_DEPENDS`: Force `clang-format`'s check to be run on the target's sources when the target is built, regardless of the setting of the `ADE_CLANG_FORMAT_BUILD_DEPENDS` cache variable.
 
-- `NO_BUILD_DEPENDS`: Force `clang-format`'s check _not_ to be run on the target's sources when the target is built, regardless of the setting of `ADE_CLANG_FORMAT_BUILD_DEPENDS` cache variable.
+- `NO_BUILD_DEPENDS`: Force `clang-format`'s check _not_ to be run on the target's sources when the target is built, regardless of the setting of the `ADE_CLANG_FORMAT_BUILD_DEPENDS` cache variable.
 
-- `COMMAND`: Force the `clang-format` to be the specified command, regardless of the value of the `ADE_CLANG_FORMAT` cache variable. If both this option and the `ADE_CLANG_FORMAT` cache variable are unspecified, then the check and fix targets are created but are a no-op. This is similar to CMake's [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) and is useful to have a single invocation of `ade_clang_format_targets()` that is able to handle both dev/CI setups, which need the formatting targets, _and_ irregular contributors who may not have `clang-format` installed.
+- `COMMAND`: Force the command to run to be the specified command, regardless of the value of the `ADE_CLANG_FORMAT` cache variable. If both this option and the `ADE_CLANG_FORMAT` cache variable are unspecified, then the check and fix targets are created but are a no-op. This is similar to CMake's [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) and is useful to have a single invocation of `ade_clang_format_targets()` that is able to handle both dev/CI setups, which need the formatting targets, _and_ irregular contributors who may not have `clang-format` installed.
 
 - `CHECK_MAIN_TARGET`: Specify the target that will run the `clang-format` check on the sources of the specified targets. If this is not specified, a default of `formatcheck` is used.
 
