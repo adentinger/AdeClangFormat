@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MIT
+name: ci
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    env:
+      # Environment variables used by CMake.
+      # See: https://cmake.org/cmake/help/latest/manual/cmake-env-variables.7.html
+      CMAKE_GENERATOR: Ninja
+      VERBOSE: 1
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install ninja
+        working-directory: ${{github.workspace}}
+        run: |
+          wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip && \
+          unzip ninja-linux.zip && rm ninja-linux.zip && \
+          echo "${{github.workspace}}" >> $GITHUB_PATH
+
+      - uses: actions/checkout@v3
+        with:
+          # The actions/checkout@v3 action clones into
+          # "${{github.workspace}}" by default, which wipes the ninja executable we just extracted.
+          path: repo
+          # Also clone submodules, recursively (like
+          # 'git submodule update --init --recursive')
+          submodules: recursive
+
+      - name: Build and run
+        working-directory: ${{github.workspace}}/repo
+        run: |
+          mkdir build && \
+          cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install && \
+          cmake --build build && \
+          ctest --test-dir build && \
+          cmake --install build
+
