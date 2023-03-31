@@ -38,7 +38,7 @@ jobs:
         working-directory: ${{github.workspace}}/repo
         run: |
           mkdir build && \
-          cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install && \
+          cmake --preset default && \
           cmake --build build && \
           ctest --test-dir build && \
           cmake --install build
