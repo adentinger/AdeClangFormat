@@ -13,15 +13,12 @@ This introduces two main new targets (which you can run with `cmake --build <bin
 - `formatcheck`: Runs `clang-format` on the sources of all specified targets without actually modifying them. The target fails if `clang-format` finds formatting errors.
 - `formatfix`: Runs `clang-format` on the sources of all specified targets, asking `clang-format` to fix them.
 
+By default, building the specified target(s) also runs the `clang-format` check to verify the formatting of the target's sources (but that can be turned off; see below). Useful to enforce formatting compliance, such as in a CI build.
+
 The `clang-format` command to run can be specified via the CMake cache variable `ADE_CLANG_FORMAT` (similarly to CMake's [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) cache variable):
 
-It is also possible to ask AdeClangFormat, while building the specified target(s), to run the corresponding `clang-format` check to verify the formatting of the target(s)'s sources. This is off by default, but is enabled by setting the `ADE_CLANG_FORMAT_BUILD_DEPENDS` option to `ON` (e.g. by setting it in the CMake cache on the command-line). Useful to enforce formatting compliance, such as in a CI build.
-
 ```bash
-cmake \
-    -DADE_CLANG_FORMAT:STRING='clang-format;--style=file:.clang-format' \
-    -DADE_CLANG_FORMAT_BUILD_DEPENDS:BOOL=ON \
-    <other-flags>
+cmake -DADE_CLANG_FORMAT:STRING='clang-format;--style=file:.clang-format' <other-flags>
 ```
 
 ## Installation
@@ -61,7 +58,7 @@ The cache variables that influence this call are:
 
 - `ADE_CLANG_FORMAT`: Default value of the `COMMAND` option if unspecified. This is a semicolon-delimited list of flags that run `clang-format`. Works the same way as [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) does. At the moment, this applies to sources of all languages on the specified targets. If unspecified and if the `COMMAND` option is also unspecified on the invocation, the check and fix targets are created but are a no-op. This is similar to CMake's [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) and is useful to have a single invocation of `ade_clang_format_targets()` that is able to handle both dev/CI setups, which need the formatting targets, _and_ irregular contributors who may not have `clang-format` installed.
 
-- `ADE_CLANG_FORMAT_BUILD_DEPENDS`: A boolean option which, when `ON`, causes invocations of `ade_clang_format_targets()` to default to setting the `BUILD_DEPENDS` option, and, when off, causes invocations of `ade_clang_format_targets()` to default to setting the `NO_BUILD_DEPENDS` option. When unspecified, this variable is considered to be `OFF`.
+- `ADE_CLANG_FORMAT_BUILD_DEPENDS`: A boolean option which, when `ON`, causes invocations of `ade_clang_format_targets()` to default to setting the `BUILD_DEPENDS` option, and, when off, causes invocations of `ade_clang_format_targets()` to default to setting the `NO_BUILD_DEPENDS` option. When unspecified, this variable is considered to be `ON`.
 
 The options are:
 
