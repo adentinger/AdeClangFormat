@@ -50,17 +50,8 @@ function(__ade_clang_format_check_target
 	  COMMAND echo "Not running clang-format check for target ${tgt}: No sources")
   endif()
 
-  if(NOT "${check_main_target}" STREQUAL "")
-	if(NOT TARGET "${check_main_target}")
-	  message(VERBOSE "Creating main check target ${check_main_target} and adding ${format_check_tgt} as a dependency.")
-	  add_custom_target("${check_main_target}"
-		COMMENT "Running clang-format check sub-targets."
-		WORKING_DIRECTORY "${tgt_source_dir}")
-	else()
-	  message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${check_main_target}.")
-	endif()
-	add_dependencies("${check_main_target}" "${format_check_tgt}")
-  endif()
+  message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${check_main_target}.")
+  add_dependencies("${check_main_target}" "${format_check_tgt}")
 
   if(build_depends)
 	message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${tgt}.")
@@ -111,14 +102,7 @@ function(__ade_clang_format_fix_target
 	  COMMAND echo "Not running clang-format fix for target ${tgt}: No sources")
   endif()
 
-  if(NOT TARGET "${fix_main_target}")
-	message(VERBOSE "Creating main fix target ${fix_main_target} and adding ${format_fix_tgt} as a dependency.")
-	add_custom_target("${fix_main_target}"
-	  COMMENT "Running clang-format fix sub-targets."
-	  WORKING_DIRECTORY "${tgt_source_dir}")
-  else()
-	message(VERBOSE "Adding ${format_fix_tgt} as a dependency of ${fix_main_target}.")
-  endif()
+  message(VERBOSE "Adding ${format_fix_tgt} as a dependency of ${fix_main_target}.")
   add_dependencies("${fix_main_target}" "${format_fix_tgt}")
 endfunction()
 
@@ -299,6 +283,18 @@ function(ade_clang_format_targets)
 	# not make that decision here. Let's leave that decision to whoever uses
 	# us; they know their setup better than we do.
 	return()
+  endif()
+
+  if(NOT TARGET "${CHECK_MAIN_TARGET}")
+	message(VERBOSE "Creating main check target ${CHECK_MAIN_TARGET}.")
+	add_custom_target("${CHECK_MAIN_TARGET}"
+	  COMMENT "Running clang-format check sub-targets.")
+  endif()
+
+  if(NOT TARGET "${FIX_MAIN_TARGET}")
+	message(VERBOSE "Creating main fix target ${FIX_MAIN_TARGET}.")
+	add_custom_target("${FIX_MAIN_TARGET}"
+	  COMMENT "Running clang-format fix sub-targets.")
   endif()
 
   foreach(tgt IN LISTS parsed_TARGETS)
