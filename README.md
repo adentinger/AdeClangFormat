@@ -13,12 +13,15 @@ This introduces two main new targets (which you can run with `cmake --build <bin
 - `formatcheck`: Runs `clang-format` on the sources of all specified targets without actually modifying them. The target fails if `clang-format` finds formatting errors.
 - `formatfix`: Runs `clang-format` on the sources of all specified targets, asking `clang-format` to fix them.
 
-By default, building the specified target(s) also runs the `clang-format` check to verify the formatting of the target's sources (but that can be turned off; see below). Useful to enforce formatting compliance, such as in a CI build.
-
 The `clang-format` command to run can be specified via the CMake cache variable `ADE_CLANG_FORMAT` (similarly to CMake's [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) cache variable):
 
+It is also possible to ask AdeClangFormat, while building the specified target(s), to run the corresponding `clang-format` check to verify the formatting of the target(s)'s sources. This is off by default, but is enabled by setting the `ADE_CLANG_FORMAT_BUILD_DEPENDS` option to `ON` (e.g. by setting it in the CMake cache on the command-line). Useful to enforce formatting compliance, such as in a CI build.
+
 ```bash
-cmake -DADE_CLANG_FORMAT:STRING='clang-format;--style=file:.clang-format' <other-flags>
+cmake \
+    -DADE_CLANG_FORMAT:STRING='clang-format;--style=file:.clang-format' \
+    -DADE_CLANG_FORMAT_BUILD_DEPENDS:BOOL=ON \
+    <other-flags>
 ```
 
 ## Installation
