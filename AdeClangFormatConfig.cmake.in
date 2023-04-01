@@ -19,8 +19,7 @@ include(CMakeFindDependencyMacro)
 # the specified target's sources.
 #
 # @param command_or_empty The specified clang-format command to run. A few
-# flags will be appended on top of them. If empty, then no command is added is
-# done.
+# flags will be appended after them.
 #
 # @param check_main_target The target to add the created check target as a
 # dependency of. Helpful to be able to run clang-format checks on all targets
@@ -31,61 +30,34 @@ include(CMakeFindDependencyMacro)
 function(__ade_clang_format_check_target
 	tgt
 	format_check_tgt
-	command_or_empty
+	command
 	check_main_target
 	build_depends)
   get_target_property(tgt_sources "${tgt}" SOURCES)
   get_target_property(tgt_source_dir "${tgt}" SOURCE_DIR)
 
   message(VERBOSE "Creating check target ${format_check_tgt}.")
-  if(NOT "${tgt_sources}" STREQUAL "" AND
-	  NOT "${command_or_empty}" STREQUAL "")
+  if(NOT "${tgt_sources}" STREQUAL "")
 	add_custom_target("${format_check_tgt}"
 	  COMMENT "Running clang-format check for target ${tgt}..."
 	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND ${command_or_empty} -n --Werror ${tgt_sources})
-  elseif("${tgt_sources}" STREQUAL "")
+	  COMMAND ${command} -n --Werror ${tgt_sources})
+  else()
 	# This case has to be handled separately, since running clang-format with
 	# no sources causes clang-format to take the source through stdin.
 	add_custom_target("${format_check_tgt}"
 	  WORKING_DIRECTORY "${tgt_source_dir}"
 	  COMMAND echo "Not running clang-format check for target ${tgt}: No sources")
-  else()
-	# If no command is specified, then this target should do nothing. The
-	# reasons for this choice:
-	#
-	# 1) To avoid users of this CMake package having to do something like
-	# "If we're one the CI machine, then call ade_clang_format, otherwise do
-	# nothing." This sort of thing would be messy and error-prone, because it
-	# forces having specific configurations for the CI machine inside the
-	# CMakeLists.txt, which should generally remain declarative and focus
-	# mostly just on describing project structure and install package
-	# structure. Instead, CI configs and dev configs for the CMake project
-	# should be controlled externally to the CMake project, e.g. via the
-	# CMakePresets.json file, via some CMake cache variable specified on the
-	# commandline, or via an environment variable. To be fair, if we do not
-	# need to call clang-format (e.g. non-dev, non-CI environment), then the
-	# calling CMakeLists.txt might try not to attempt finding this package so
-	# that these setups don't need this package installed. But still, we should
-	# not make that decision here. Let's leave that decision to whoever uses
-	# us; they know their setup better than we do.
-	#
-	# 2) To remain consistent with CMake's clang-tidy integration, where if you
-	# don't define the CMAKE_<lang>_CLANG_TIDY variable nor the
-	# <lang>_CLANG_TIDY target property, then clang-tidy is not run.
-	add_custom_target("${format_check_tgt}"
-	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND echo "Not running clang-format check for target ${tgt}: No command specified.")
   endif()
 
   if(NOT "${check_main_target}" STREQUAL "")
-	if (NOT TARGET "${check_main_target}")
-	  message(VERBOSE "Creating check target ${check_main_target} and adding ${format_check_tgt} as a dependency.")
+	if(NOT TARGET "${check_main_target}")
+	  message(VERBOSE "Creating main check target ${check_main_target} and adding ${format_check_tgt} as a dependency.")
 	  add_custom_target("${check_main_target}"
 		COMMENT "Running clang-format check sub-targets."
 		WORKING_DIRECTORY "${tgt_source_dir}")
 	else()
-	  	  message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${check_main_target}.")
+	  message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${check_main_target}.")
 	endif()
 	add_dependencies("${check_main_target}" "${format_check_tgt}")
   endif()
@@ -103,9 +75,8 @@ endfunction()
 # @param format_fix_tgt The target that will run clang-format for the
 # specified target.
 #
-# @param command_or_empty The specified clang-format command to run. A few
-# flags will be appended on top of them. If empty, then the target is created
-# but is a no-op.
+# @param command The specified clang-format command to run. A few
+# flags will be appended after them.
 #
 # @param fix_main_target The target to add the created check target as a
 # dependency of. Helpful to be able to run clang-format checks on all targets
@@ -113,7 +84,7 @@ endfunction()
 function(__ade_clang_format_fix_target
 	tgt
 	format_fix_tgt
-	command_or_empty
+	command
 	fix_main_target)
   if(TARGET "${format_fix_tgt}")
 	message(FATAL_ERROR
@@ -127,31 +98,24 @@ function(__ade_clang_format_fix_target
   get_target_property(tgt_source_dir "${tgt}" SOURCE_DIR)
 
   message(VERBOSE "Creating fix target ${format_fix_tgt}.")
-  if(NOT "${tgt_sources}" STREQUAL "" AND
-	  NOT "${command_or_empty}" STREQUAL "")
+  if(NOT "${tgt_sources}" STREQUAL "")
 	add_custom_target("${format_fix_tgt}"
 	  COMMENT "Running clang-format fix for target ${tgt}..."
 	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND ${command_or_empty} -i ${tgt_sources})
-  elseif("${tgt_sources}" STREQUAL "")
+	  COMMAND ${command} -i ${tgt_sources})
+  else()
 	# This case has to be handled separately, since running clang-format with
 	# no sources causes clang-format to take the source through stdin.
 	add_custom_target("${format_fix_tgt}"
 	  WORKING_DIRECTORY "${tgt_source_dir}"
 	  COMMAND echo "Not running clang-format fix for target ${tgt}: No sources")
-  else()
-	# If no command is specified, then this target should do nothing, for the
-	# same reasons as above.
-	add_custom_target("${format_fix_tgt}"
-	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND echo "Not running clang-format fix for target ${tgt}: No command specified.")
   endif()
 
   if(NOT TARGET "${fix_main_target}")
+	message(VERBOSE "Creating main fix target ${fix_main_target} and adding ${format_fix_tgt} as a dependency.")
 	add_custom_target("${fix_main_target}"
 	  COMMENT "Running clang-format fix sub-targets."
 	  WORKING_DIRECTORY "${tgt_source_dir}")
-	message(VERBOSE "Creating main fix target ${fix_main_target} and adding ${format_fix_tgt} as a dependency.")
   else()
 	message(VERBOSE "Adding ${format_fix_tgt} as a dependency of ${fix_main_target}.")
   endif()
@@ -242,6 +206,12 @@ function(ade_clang_format_targets)
 	message(FATAL_ERROR "TARGETS keyword missing.")
   endif()
 
+  foreach(tgt IN LISTS parsed_TARGETS)
+	if(NOT TARGET "${tgt}")
+	  message(FATAL_ERROR "Target \"${tgt}\" does not exist")
+	endif()
+  endforeach()
+
   # Parse & sanitize BUILD_DEPENDS and NO_BUILD_DEPENDS
   if(parsed_NO_BUILD_DEPENDS OR parsed_BUILD_DEPENDS)
 	if(parsed_NO_BUILD_DEPENDS AND parsed_BUILD_DEPENDS)
@@ -290,37 +260,62 @@ function(ade_clang_format_targets)
   endif()
 
   if(DEFINED parsed_COMMAND)
-	set(COMMAND_OR_EMPTY ${parsed_COMMAND})
+	set(COMMAND ${parsed_COMMAND})
   elseif(DEFINED ADE_CLANG_FORMAT)
-	set(COMMAND_OR_EMPTY ${ADE_CLANG_FORMAT})
+	set(COMMAND ${ADE_CLANG_FORMAT})
   else()
 	message(VERBOSE
 	  "ade_clang_format_targets(): COMMAND keyword missing and "
-	  "ADE_CLANG_FORMAT is undefined; created clang-format targets will be a "
-	  "no-op.")
+	  "ADE_CLANG_FORMAT is undefined; clang-format targets will not"
+	  "be created.")
 
-	set(COMMAND_OR_EMPTY)
+	# Do nothing; stop now without any side-effects.
+	#
+	# The reason for this choice, rather than creating no-op targets, is
+	# that we want to ensure that we can't get it wrong; if there is no
+	# command, then trying to check or fix formatting should be an error,
+	# rather than silently succeeding.
+	#
+	# Also, if no command is specified, we should not report an error, for
+	# these two reasons:
+	#
+	# 1) To remain consistent with CMake's clang-tidy integration, where if you
+	# don't define the CMAKE_<lang>_CLANG_TIDY variable nor the
+	# <lang>_CLANG_TIDY target property, then clang-tidy is not run.
+	#
+	# 2) To avoid users of this CMake package having to do something like
+	# "If we're one the CI machine, then call ade_clang_format, otherwise do
+	# nothing." This sort of thing would be messy and error-prone, because it
+	# forces having specific configurations for the CI machine inside the
+	# CMakeLists.txt, which should generally remain declarative and focus
+	# mostly just on describing project structure and install package
+	# structure. Instead, CI configs and dev configs for the CMake project
+	# should be controlled externally to the CMake project, e.g. via the
+	# CMakePresets.json file, via some CMake cache variable specified on the
+	# commandline, or via an environment variable. To be fair, if we do not
+	# need to call clang-format (e.g. non-dev, non-CI environment), then the
+	# calling CMakeLists.txt might try not to attempt finding this package so
+	# that these setups don't need this package installed. But still, we should
+	# not make that decision here. Let's leave that decision to whoever uses
+	# us; they know their setup better than we do.
+	return()
   endif()
 
   foreach(tgt IN LISTS parsed_TARGETS)
 	set(format_check_tgt "${tgt}${CHECK_POSTFIX}")
 	set(format_fix_tgt "${tgt}${FIX_POSTFIX}")
 
-	if(NOT TARGET "${tgt}")
-	  message(FATAL_ERROR "Target \"${tgt}\" does not exist")
-	endif()
-
 	__ade_clang_format_check_target(
 	  "${tgt}"
 	  "${format_check_tgt}"
-	  "${COMMAND_OR_EMPTY}"
+	  "${COMMAND}"
 	  "${CHECK_MAIN_TARGET}"
 	  "${BUILD_DEPENDS}")
 
 	__ade_clang_format_fix_target(
 	  "${tgt}"
 	  "${format_fix_tgt}"
-	  "${COMMAND_OR_EMPTY}"
+	  "${COMMAND}"
 	  "${FIX_MAIN_TARGET}")
   endforeach()
 endfunction()
