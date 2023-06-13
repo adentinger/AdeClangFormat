@@ -13,41 +13,65 @@ include(CMakeFindDependencyMacro)
 
 # Internal function; do not use.
 #
-# @param tgt The target whose sources to run clang-format for.
+# @param format_type "plain" for plain clang-format, "git" for
+# git-clang-format.
 #
-# @param format_check_tgt The target that will run the clang-format check for
-# the specified target's sources.
+# @param tgt The target whose sources to run (git-)clang-format for.
 #
-# @param command_or_empty The specified clang-format command to run. A few
-# flags will be appended after them.
+# @param format_check_tgt The target that will run the (git-)clang-format check
+# for the specified target's sources.
+#
+# @param command_or_empty The specified (git-)clang-format command to run. A
+# few flags will be appended after them.
 #
 # @param check_main_target The target to add the created check target as a
-# dependency of. Helpful to be able to run clang-format checks on all targets
-# of the CMake build.
+# dependency of. Helpful to be able to run (git-)clang-format checks on all
+# targets of the CMake build.
 #
 # @param build_depends Whether building the target "tgt" should depend on the
 # check being done.
+#
+# @param ref_commit Reference commit. Only used if "format_type" is not "plain".
 function(__ade_clang_format_check_target
+    format_type
 	tgt
 	format_check_tgt
 	command
 	check_main_target
-	build_depends)
+	build_depends
+    ref_commit)
   get_target_property(tgt_sources "${tgt}" SOURCES)
   get_target_property(tgt_source_dir "${tgt}" SOURCE_DIR)
 
-  message(VERBOSE "Creating check target ${format_check_tgt}.")
+  message(VERBOSE
+    "Creating check target ${format_check_tgt} of type \"${format_type}\".")
   if(NOT "${tgt_sources}" STREQUAL "")
-	add_custom_target("${format_check_tgt}"
-	  COMMENT "Running clang-format check for target ${tgt}..."
-	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND ${command} -n --Werror ${tgt_sources})
+    if("${format_type}" STREQUAL plain)
+      add_custom_target("${format_check_tgt}"
+        COMMENT "Running format check for target ${tgt}..."
+        WORKING_DIRECTORY "${tgt_source_dir}"
+        COMMAND ${command} -n --Werror ${tgt_sources})
+    else()
+      add_custom_target("${format_check_tgt}"
+        COMMENT "Running format check for target ${tgt}..."
+        WORKING_DIRECTORY "${tgt_source_dir}"
+        # diff makes git-clang-format not change anything but print the
+        # before-and-after instead. This is a simple, albeit annoying,
+        # way for a contributor to know what formatting to fix in their
+        # contribution.
+        #
+        # A better way of doing this is using a bot. Simplifying
+        # the implementation of that could be done with issue #25.
+        COMMAND ${command} -q --diff "${ref_commit}" -- ${tgt_sources})
+    endif()
   else()
-	# This case has to be handled separately, since running clang-format with
-	# no sources causes clang-format to take the source through stdin.
+    # This case has to be handled separately, since running clang-format with
+    # no sources causes it to take the source through stdin. git-clang-format
+    # doesn't care, but while we're at it let's keep the logic of both
+    # similar.
 	add_custom_target("${format_check_tgt}"
 	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND echo "Not running clang-format check for target ${tgt}: No sources")
+	  COMMAND echo "Not running format check for target ${tgt}: No sources")
   endif()
 
   message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${check_main_target}.")
@@ -61,53 +85,76 @@ endfunction()
 
 # Internal function; do not use.
 #
-# @param tgt The target whose sources to run clang-format for.
+# @param format_type "plain" for plain clang-format, "git" for
+# git-clang-format.
 #
-# @param format_fix_tgt The target that will run clang-format for the
+# @param tgt The target whose sources to run (git-)clang-format for.
+#
+# @param format_fix_tgt The target that will run (git-)clang-format for the
 # specified target.
 #
-# @param command The specified clang-format command to run. A few
+# @param command The specified (git-)clang-format command to run. A few
 # flags will be appended after them.
 #
 # @param fix_main_target The target to add the created check target as a
-# dependency of. Helpful to be able to run clang-format checks on all targets
-# of the CMake build.
+# dependency of. Helpful to be able to run (git-)clang-format checks on all
+# targets of the CMake build.
+#
+# @param ref_commit Reference commit. Only used if "format_type" is not "plain".
 function(__ade_clang_format_fix_target
-	tgt
-	format_fix_tgt
-	command
-	fix_main_target)
+    format_type
+    tgt
+    format_fix_tgt
+    command
+    fix_main_target
+    ref_commit)
   if(TARGET "${format_fix_tgt}")
 	message(FATAL_ERROR
-	  "Cannot create fix target \"${format_fix_tgt}\" for clang-format: A "
-	  "target with the same name already exists. Use the "
-	  "POSTFIX keyword of ade_clang_format_targets() to specify a different "
-	  "target.")
+      "Cannot create fix target \"${format_fix_tgt}\" for AdeClangFormat: A "
+      "target with the same name already exists. Use the "
+      "POSTFIX keyword of ade_clang_format_(git/plain)_targets() to specify a "
+      "different target.")
   endif()
 
   get_target_property(tgt_sources "${tgt}" SOURCES)
   get_target_property(tgt_source_dir "${tgt}" SOURCE_DIR)
 
-  message(VERBOSE "Creating fix target ${format_fix_tgt}.")
+  message(VERBOSE
+    "Creating fix target ${format_fix_tgt} of type \"${format_type}\".")
   if(NOT "${tgt_sources}" STREQUAL "")
-	add_custom_target("${format_fix_tgt}"
-	  COMMENT "Running clang-format fix for target ${tgt}..."
-	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND ${command} -i ${tgt_sources})
+    if ("${format_type}" STREQUAL plain)
+      add_custom_target("${format_fix_tgt}"
+        COMMENT "Running format fix for target ${tgt}..."
+        WORKING_DIRECTORY "${tgt_source_dir}"
+        COMMAND ${command} -i ${tgt_sources})
+    else()
+      add_custom_target("${format_fix_tgt}"
+        COMMENT "Running format fix for target ${tgt}..."
+        WORKING_DIRECTORY "${tgt_source_dir}"
+        COMMAND ${command} "${ref_commit}" -- ${tgt_sources})
+    endif()
   else()
 	# This case has to be handled separately, since running clang-format with
-	# no sources causes clang-format to take the source through stdin.
+	# no sources causes it to take the source through stdin. git-clang-format
+    # doesn't care, but while we're at it let's keep the logic of both
+    # similar.
 	add_custom_target("${format_fix_tgt}"
 	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND echo "Not running clang-format fix for target ${tgt}: No sources")
+	  COMMAND echo "Not running format fix for target ${tgt}: No sources")
   endif()
 
-  message(VERBOSE "Adding ${format_fix_tgt} as a dependency of ${fix_main_target}.")
+  message(VERBOSE
+    "Adding ${format_fix_tgt} as a dependency of ${fix_main_target}.")
   add_dependencies("${fix_main_target}" "${format_fix_tgt}")
 endfunction()
 
-function(ade_clang_format_targets)
-  message(VERBOSE "ade_clang_format_targets(): Parsing arguments.")
+# Internal function; do not use.
+#
+# @param format_type "plain" for plain clang-format, "git" for
+# git-clang-format.
+function(__ade_clang_format_targets_catchall format_type)
+  message(VERBOSE "AdeClangFormat: Parsing arguments.")
+
   ####
   #
   # TL;DR: This is an explanation on how to pass arguments to CMake functions.
@@ -159,7 +206,8 @@ function(ade_clang_format_targets)
   #     if(${my_list} STREQUAL "")
   # ...when my_list is empty will expand to:
   #     if(STREQUAL "")
-  # ...which will cause a CMake error.
+  # ...which will cause a CMake error. Instead, you probably wanted to write:
+  #     if ("${my_list}" STREQUAL "")
 
   # For a quick explanation of cmake_parse_arguments(), see:
   # https://youtu.be/IZXNsim9TWI?t=1618
@@ -171,14 +219,14 @@ function(ade_clang_format_targets)
 	"BUILD_DEPENDS;NO_BUILD_DEPENDS" # Options
 
 	# Same here
-	"FIX_MAIN_TARGET;FIX_POSTFIX;CHECK_MAIN_TARGET;CHECK_POSTFIX" # Single-value keywords
+	"FIX_MAIN_TARGET;FIX_POSTFIX;CHECK_MAIN_TARGET;CHECK_POSTFIX;REF_COMMIT" # Single-value keywords
 
 	# Same here
 	"TARGETS;COMMAND"                # Multi-value keywords
 
-	# Here we want to pass one argument per list item of ARGN, which is the
-	# list of arguments passed to *this* function. So this variable expansion
-	# must not be inside a quoted string.
+	# Here we want to pass one argument per list item of ARGN (which is the
+	# list of arguments passed to *this* function past the last expected
+    # argument). So this variable expansion must not be inside a quoted string.
 	${ARGN})
 
   if(parsed_UNPARSED_ARGUMENTS)
@@ -200,7 +248,8 @@ function(ade_clang_format_targets)
   if(parsed_NO_BUILD_DEPENDS OR parsed_BUILD_DEPENDS)
 	if(parsed_NO_BUILD_DEPENDS AND parsed_BUILD_DEPENDS)
 	  message(FATAL_ERROR
-		"Both BUILD_DEPENDS and NO_BUILD_DEPENDS were specified to ade_clang_format_targets().")
+		"Both BUILD_DEPENDS and NO_BUILD_DEPENDS were specified to "
+        "AdeClangFormat.")
 	endif()
 	if(parsed_NO_BUILD_DEPENDS)
 	  set(BUILD_DEPENDS OFF)
@@ -213,6 +262,24 @@ function(ade_clang_format_targets)
 	else()
 	  set(BUILD_DEPENDS ON)
 	endif()
+  endif()
+
+  if("${format_type}" STREQUAL plain)
+    if(DEFINED parsed_REF_COMMIT)
+      message(ERROR
+        "ade_clang_format_plain_targets() does not take a REF_COMMIT.")
+    endif()
+  else()
+    if(DEFINED parsed_REF_COMMIT)
+      set(REF_COMMIT "${parsed_REF_COMMIT}")
+    elseif(DEFINED ADE_CLANG_FORMAT_GIT_REF_COMMIT)
+      set(REF_COMMIT "${ADE_CLANG_FORMAT_GIT_REF_COMMIT}")
+    else()
+      message(ERROR
+        "A call to ade_clang_format_git_targets() was made with "
+        "ADE_CLANG_FORMAT_GIT_REF_COMMIT undefined and with REF_COMMIT not "
+        "specified on the call.")
+    endif()
   endif()
 
   if(DEFINED parsed_CHECK_POSTFIX)
@@ -243,58 +310,71 @@ function(ade_clang_format_targets)
 	set(FIX_MAIN_TARGET formatfix)
   endif()
 
+  if("${format_type}" STREQUAL plain AND DEFINED ADE_CLANG_FORMAT)
+	message(DEPRECATION
+      "Use of the ADE_CLANG_FORMAT variable is "
+      "deprecated; use ADE_CLANG_FORMAT_PLAIN instead.")
+  endif()
+
   if(DEFINED parsed_COMMAND)
 	set(COMMAND ${parsed_COMMAND})
-  elseif(DEFINED ADE_CLANG_FORMAT)
-	set(COMMAND ${ADE_CLANG_FORMAT})
+  elseif("${format_type}" STREQUAL plain)
+    if(DEFINED ADE_CLANG_FORMAT_PLAIN)
+      set(COMMAND ${ADE_CLANG_FORMAT_PLAIN})
+    elseif(DEFINED ADE_CLANG_FORMAT)
+      set(COMMAND ${ADE_CLANG_FORMAT})
+    endif()
+  elseif("${format_type}" STREQUAL git AND DEFINED ADE_CLANG_FORMAT_PLAIN)
+    set(COMMAND ${ADE_CLANG_FORMAT_GIT})
   else()
 	message(VERBOSE
-	  "ade_clang_format_targets(): COMMAND keyword missing and "
-	  "ADE_CLANG_FORMAT is undefined; clang-format targets will not"
+	  "AdeClangFormat: COMMAND keyword missing and "
+	  "ADE_CLANG_FORMAT_PLAIN is undefined; format targets will not"
 	  "be created.")
 
-	# Do nothing; stop now without any side-effects.
-	#
-	# The reason for this choice, rather than creating no-op targets, is
-	# that we want to ensure that we can't get it wrong; if there is no
-	# command, then trying to check or fix formatting should be an error,
-	# rather than silently succeeding.
-	#
-	# Also, if no command is specified, we should not report an error, for
-	# these two reasons:
-	#
-	# 1) To remain consistent with CMake's clang-tidy integration, where if you
-	# don't define the CMAKE_<lang>_CLANG_TIDY variable nor the
-	# <lang>_CLANG_TIDY target property, then clang-tidy is not run.
-	#
-	# 2) To avoid users of this CMake package having to do something like
-	# "If we're one the CI machine, then call ade_clang_format, otherwise do
-	# nothing." This sort of thing would be messy and error-prone, because it
-	# forces having specific configurations for the CI machine inside the
-	# CMakeLists.txt, which should generally remain declarative and focus
-	# mostly just on describing project structure and install package
-	# structure. Instead, CI configs and dev configs for the CMake project
-	# should be controlled externally to the CMake project, e.g. via the
-	# CMakePresets.json file, via some CMake cache variable specified on the
-	# commandline, or via an environment variable. To be fair, if we do not
-	# need to call clang-format (e.g. non-dev, non-CI environment), then the
-	# calling CMakeLists.txt might try not to attempt finding this package so
-	# that these setups don't need this package installed. But still, we should
-	# not make that decision here. Let's leave that decision to whoever uses
-	# us; they know their setup better than we do.
+    # Do nothing; stop now without any side-effects.
+    #
+    # The reason for this choice, rather than creating no-op targets, is
+    # that we want to ensure that we can't get it wrong; if there is no
+    # command, then trying to check or fix formatting should be an error,
+    # rather than silently succeeding.
+    #
+    # Also, if no command is specified, we should not report an error on CMake
+    # generation, we should only refrain from creating the targets. This is for
+    # these two reasons:
+    #
+    # 1) To remain consistent with CMake's clang-tidy integration, where if you
+    # don't define the CMAKE_<lang>_CLANG_TIDY variable nor the
+    # <lang>_CLANG_TIDY target property, then clang-tidy is not run.
+    #
+    # 2) To avoid users of this CMake package having to do something like
+    # "If we're on the CI machine, then use AdeClangFormat, otherwise do
+    # nothing." This sort of thing would be messy and error-prone, because it
+    # forces having specific configurations for the CI machine inside the
+    # CMakeLists.txt, which should generally remain declarative and focus
+    # mostly just on describing project structure and install package
+    # structure. Instead, CI configs and dev configs for the CMake project
+    # should be controlled externally to the CMake project, e.g. via the
+    # CMakePresets.json file, via some CMake cache variable specified on the
+    # commandline, or via an environment variable. To be fair, if we do not
+    # need to call clang-format (e.g. non-dev, non-CI environment), then the
+    # calling CMakeLists.txt might try not to attempt finding this package so
+    # that these setups don't need this package installed. But still, we should
+    # not make that decision here. Let's leave that decision to whoever uses
+    # us; they know their setup better than we do.
 	return()
   endif()
 
   if(NOT TARGET "${CHECK_MAIN_TARGET}")
 	message(VERBOSE "Creating main check target ${CHECK_MAIN_TARGET}.")
 	add_custom_target("${CHECK_MAIN_TARGET}"
-	  COMMENT "Running clang-format check sub-targets.")
+	  COMMENT "Running format check sub-targets.")
   endif()
 
   if(NOT TARGET "${FIX_MAIN_TARGET}")
 	message(VERBOSE "Creating main fix target ${FIX_MAIN_TARGET}.")
 	add_custom_target("${FIX_MAIN_TARGET}"
-	  COMMENT "Running clang-format fix sub-targets.")
+	  COMMENT "Running format fix sub-targets.")
   endif()
 
   foreach(tgt IN LISTS parsed_TARGETS)
@@ -302,17 +382,38 @@ function(ade_clang_format_targets)
 	set(format_fix_tgt "${tgt}${FIX_POSTFIX}")
 
 	__ade_clang_format_check_target(
+      "${format_type}"
 	  "${tgt}"
 	  "${format_check_tgt}"
 	  "${COMMAND}"
 	  "${CHECK_MAIN_TARGET}"
-	  "${BUILD_DEPENDS}")
+	  "${BUILD_DEPENDS}"
+      "${REF_COMMIT}")
 
 	__ade_clang_format_fix_target(
+      "${format_type}"
 	  "${tgt}"
 	  "${format_fix_tgt}"
 	  "${COMMAND}"
-	  "${FIX_MAIN_TARGET}")
+	  "${FIX_MAIN_TARGET}"
+      "${REF_COMMIT}")
   endforeach()
 endfunction()
 
+function(ade_clang_format_plain_targets)
+  __ade_clang_format_targets_catchall(plain ${ARGN})
+endfunction()
+
+function(ade_clang_format_git_targets)
+  __ade_clang_format_targets_catchall(git ${ARGN})
+endfunction()
+
+function(ade_clang_format_targets)
+  message(DEPRECATION
+    "ade_clang_format_targets() is deprecated; just replace uses of it by "
+    "ade_clang_format_plain_targets(). Also consider transitioning to "
+    "ade_clang_format_git_targets() instead; see "
+    "https://github.com/adentinger/AdeClangFormat/blob/main/doc/git-clang-format.md")
+
+  ade_clang_format_plain_targets(${ARGN})
+endfunction()

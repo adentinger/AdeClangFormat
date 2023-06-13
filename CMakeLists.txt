@@ -4,9 +4,9 @@
 cmake_minimum_required(VERSION 3.19)
 
 project(AdeClangFormat
-  VERSION 1.0
+  VERSION 1.1
   LANGUAGES NONE
-  DESCRIPTION "Simple clang-format integration into CMake."
+  DESCRIPTION "Simple (git-)clang-format integration into CMake."
   HOMEPAGE_URL "https://github.com/AnthonyD973/CMakeBestPracticesTests")
 # Note that this variable is not a special CMake variable.
 set(PROJECT_LICENSE_FILE "${CMAKE_SOURCE_DIR}/LICENSE.txt"
