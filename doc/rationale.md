@@ -1,6 +1,6 @@
 # Rationale of AdeClangFormat
 
-**TL;DR:** AdeClangFormat uses information provided by CMake to call `(git-)clang-format` and is designed to have a single config handling both automated setups like CI and irregular contributors who may not have `(git-)clang-format` properly setup.
+**TL;DR:** AdeClangFormat uses information provided by CMake to call `(git-)clang-format` and is designed to have a single config handling both automated setups like CI and irregular contributors who may not need/want to run `(git-)clang-format` checks locally.
 
 --------------
 
