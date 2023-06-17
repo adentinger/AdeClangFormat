@@ -53,7 +53,7 @@ function(__ade_clang_format_check_target
         COMMAND ${command} -n --Werror ${tgt_sources})
     else()
       add_custom_target("${format_check_tgt}"
-        COMMENT "Running format check for target ${tgt}..."
+        COMMENT "Running format check for target ${tgt} with ref commit \"${ref_commit}\"..."
         WORKING_DIRECTORY "${tgt_source_dir}"
         # diff makes git-clang-format not change anything but print the
         # before-and-after instead. This is a simple, albeit annoying,
@@ -129,7 +129,7 @@ function(__ade_clang_format_fix_target
         COMMAND ${command} -i ${tgt_sources})
     else()
       add_custom_target("${format_fix_tgt}"
-        COMMENT "Running format fix for target ${tgt}..."
+        COMMENT "Running format fix for target ${tgt} with ref commit \"${ref_commit}\"..."
         WORKING_DIRECTORY "${tgt_source_dir}"
         COMMAND ${command} "${ref_commit}" -- ${tgt_sources})
     endif()
