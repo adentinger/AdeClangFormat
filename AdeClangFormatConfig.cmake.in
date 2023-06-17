@@ -264,24 +264,6 @@ function(__ade_clang_format_targets_catchall format_type)
 	endif()
   endif()
 
-  if("${format_type}" STREQUAL plain)
-    if(DEFINED parsed_REF_COMMIT)
-      message(ERROR
-        "ade_clang_format_plain_targets() does not take a REF_COMMIT.")
-    endif()
-  else()
-    if(DEFINED parsed_REF_COMMIT)
-      set(REF_COMMIT "${parsed_REF_COMMIT}")
-    elseif(DEFINED ADE_CLANG_FORMAT_GIT_REF_COMMIT)
-      set(REF_COMMIT "${ADE_CLANG_FORMAT_GIT_REF_COMMIT}")
-    else()
-      message(ERROR
-        "A call to ade_clang_format_git_targets() was made with "
-        "ADE_CLANG_FORMAT_GIT_REF_COMMIT undefined and with REF_COMMIT not "
-        "specified on the call.")
-    endif()
-  endif()
-
   if(DEFINED parsed_CHECK_POSTFIX)
 	set(CHECK_POSTFIX "${parsed_FIX_POSTFIX}")
   else()
@@ -365,6 +347,24 @@ function(__ade_clang_format_targets_catchall format_type)
 	return()
   endif()
 
+  if("${format_type}" STREQUAL plain)
+    if(DEFINED parsed_REF_COMMIT)
+      message(ERROR
+        "ade_clang_format_plain_targets() does not take a REF_COMMIT.")
+    endif()
+  else()
+    if(DEFINED parsed_REF_COMMIT)
+      set(REF_COMMIT "${parsed_REF_COMMIT}")
+    elseif(DEFINED ADE_CLANG_FORMAT_GIT_REF_COMMIT)
+      set(REF_COMMIT "${ADE_CLANG_FORMAT_GIT_REF_COMMIT}")
+    else()
+      message(ERROR
+        "A non-NOOP call to ade_clang_format_git_targets() was made with "
+        "ADE_CLANG_FORMAT_GIT_REF_COMMIT undefined and with REF_COMMIT not "
+        "specified on the call.")
+    endif()
+  endif()
+
   if(NOT TARGET "${CHECK_MAIN_TARGET}")
 	message(VERBOSE "Creating main check target ${CHECK_MAIN_TARGET}.")
 	add_custom_target("${CHECK_MAIN_TARGET}"
@@ -410,10 +410,7 @@ endfunction()
 
 function(ade_clang_format_targets)
   message(DEPRECATION
-    "ade_clang_format_targets() is deprecated; just replace uses of it by "
-    "ade_clang_format_plain_targets(). Also consider transitioning to "
-    "ade_clang_format_git_targets() instead; see "
-    "https://github.com/adentinger/AdeClangFormat/blob/main/doc/git-clang-format.md")
+    "ade_clang_format_targets() is deprecated; just replace uses of it by ade_clang_format_plain_targets(). Also consider transitioning to ade_clang_format_git_targets() instead; see https://github.com/adentinger/AdeClangFormat/blob/main/doc/git-clang-format.md")
 
   ade_clang_format_plain_targets(${ARGN})
 endfunction()
