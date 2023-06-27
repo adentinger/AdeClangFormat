@@ -307,13 +307,20 @@ function(__ade_clang_format_targets_catchall format_type)
     elseif(DEFINED CACHE{ADE_CLANG_FORMAT})
       set(COMMAND ${ADE_CLANG_FORMAT})
     endif()
-  elseif("${format_type}" STREQUAL git AND DEFINED ADE_CLANG_FORMAT_PLAIN)
+  elseif("${format_type}" STREQUAL git AND DEFINED ADE_CLANG_FORMAT_GIT)
     set(COMMAND ${ADE_CLANG_FORMAT_GIT})
   else()
-    message(VERBOSE
-      "AdeClangFormat: COMMAND keyword missing and "
-      "ADE_CLANG_FORMAT_PLAIN is undefined; format targets will not"
-      "be created.")
+    if("${format_type}" STREQUAL git)
+      message(VERBOSE
+        "AdeClangFormat: COMMAND keyword missing and "
+        "ADE_CLANG_FORMAT_GIT is undefined; format targets will not "
+        "be created.")
+    else()
+      message(VERBOSE
+        "AdeClangFormat: COMMAND keyword missing and "
+        "ADE_CLANG_FORMAT_PLAIN is undefined; format targets will not "
+        "be created.")
+    endif()
 
     # Do nothing; stop now without any side-effects.
     #
