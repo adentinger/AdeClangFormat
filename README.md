@@ -91,6 +91,10 @@ ade_clang_format_plain_targets(TARGETS [targets...]
 
 Sets up check and fix targets that invoke `(git-)clang-format` on the sources of the targets specified to `TARGETS`. Note that these functions may be invoked multiple times, as long as the same target is not specified again.
 
+The environment variables that influence these calls are:
+
+- `ADE_CLANG_FORMAT_GIT_REF_COMMIT`: Same as the cache variable of the same name. If specified and the cache variable of the same name is unspecified, this environment variable's value is used.
+
 The cache variables that influence these calls are:
 
 - `ADE_CLANG_FORMAT_GIT`/`ADE_CLANG_FORMAT_PLAIN`: Default value of the `COMMAND` option of `ade_clang_format_(git/plain)_targets()` if unspecified. This is a semicolon-delimited list of flags that run `(git-)clang-format`. Works the same way as [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) does. At the moment, this applies to sources of all languages on the specified targets, see [issue #6](https://github.com/adentinger/AdeClangFormat/issues/6). If unspecified and if the `COMMAND` option is also unspecified, then the invocation is a NO-OP (but the check and fix targets are not created to help detect configuration errors). This is similar to CMake's [`CMAKE_<LANG>_CLANG_TIDY`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CLANG_TIDY.html) and is useful to have a single invocation of `ade_clang_format_(git/plain)_targets()` that is able to handle both dev/CI setups, which need the formatting targets, _and_ irregular contributors who may not have `clang-format` installed or may not want to set it up.
