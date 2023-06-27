@@ -192,12 +192,13 @@ function(__ade_clang_format_targets_catchall format_type)
   # to quote literal strings unless what happens is obvious.
   #
   # 3) Unquoted variable expansion: This is the variable expansion to use if
-  # you want to expand a list in a situation where you want one argument per list
-  # item. E.g.:
+  # you want to expand a list in a situation where you want one argument per
+  # list item. Any unquoted variable expansion is considered to be a special
+  # situation where the variable is considered to be a list, with each item
+  # separated by a semicolon. Therefore, if the "my_list" variable is set like
+  # this...
   #     set(my_list qwer "as  df ;  z\n xc\tv")
-  # Any unquoted variable expansion is considered to be a special situation
-  # where the variable is considered to be a list, with each item separated by
-  # a semicolon. Therefore this:
+  # ...then this...
   #     ${my_list}
   # ...expands to three arguments, as if we had written:
   #     "qwer" "as  df " "  z\n xc\tv"
@@ -207,7 +208,7 @@ function(__ade_clang_format_targets_catchall format_type)
   # ...when my_list is empty will expand to:
   #     if(STREQUAL "")
   # ...which will cause a CMake error. Instead, you probably wanted to write:
-  #     if ("${my_list}" STREQUAL "")
+  #     if("${my_list}" STREQUAL "")
 
   # For a quick explanation of cmake_parse_arguments(), see:
   # https://youtu.be/IZXNsim9TWI?t=1618
