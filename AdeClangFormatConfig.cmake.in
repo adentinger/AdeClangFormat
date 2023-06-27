@@ -34,11 +34,11 @@ include(CMakeFindDependencyMacro)
 # @param ref_commit Reference commit. Only used if "format_type" is not "plain".
 function(__ade_clang_format_check_target
     format_type
-	tgt
-	format_check_tgt
-	command
-	check_main_target
-	build_depends
+    tgt
+    format_check_tgt
+    command
+    check_main_target
+    build_depends
     ref_commit)
   get_target_property(tgt_sources "${tgt}" SOURCES)
   get_target_property(tgt_source_dir "${tgt}" SOURCE_DIR)
@@ -69,17 +69,17 @@ function(__ade_clang_format_check_target
     # no sources causes it to take the source through stdin. git-clang-format
     # doesn't care, but while we're at it let's keep the logic of both
     # similar.
-	add_custom_target("${format_check_tgt}"
-	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND echo "Not running format check for target ${tgt}: No sources")
+    add_custom_target("${format_check_tgt}"
+      WORKING_DIRECTORY "${tgt_source_dir}"
+      COMMAND echo "Not running format check for target ${tgt}: No sources")
   endif()
 
   message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${check_main_target}.")
   add_dependencies("${check_main_target}" "${format_check_tgt}")
 
   if(build_depends)
-	message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${tgt}.")
-	add_dependencies("${tgt}" "${format_check_tgt}")
+    message(VERBOSE "Adding ${format_check_tgt} as a dependency of ${tgt}.")
+    add_dependencies("${tgt}" "${format_check_tgt}")
   endif()
 endfunction()
 
@@ -109,7 +109,7 @@ function(__ade_clang_format_fix_target
     fix_main_target
     ref_commit)
   if(TARGET "${format_fix_tgt}")
-	message(FATAL_ERROR
+    message(FATAL_ERROR
       "Cannot create fix target \"${format_fix_tgt}\" for AdeClangFormat: A "
       "target with the same name already exists. Use the "
       "POSTFIX keyword of ade_clang_format_(git/plain)_targets() to specify a "
@@ -134,13 +134,13 @@ function(__ade_clang_format_fix_target
         COMMAND ${command} "${ref_commit}" -- ${tgt_sources})
     endif()
   else()
-	# This case has to be handled separately, since running clang-format with
-	# no sources causes it to take the source through stdin. git-clang-format
+    # This case has to be handled separately, since running clang-format with
+    # no sources causes it to take the source through stdin. git-clang-format
     # doesn't care, but while we're at it let's keep the logic of both
     # similar.
-	add_custom_target("${format_fix_tgt}"
-	  WORKING_DIRECTORY "${tgt_source_dir}"
-	  COMMAND echo "Not running format fix for target ${tgt}: No sources")
+    add_custom_target("${format_fix_tgt}"
+      WORKING_DIRECTORY "${tgt_source_dir}"
+      COMMAND echo "Not running format fix for target ${tgt}: No sources")
   endif()
 
   message(VERBOSE
@@ -212,94 +212,94 @@ function(__ade_clang_format_targets_catchall format_type)
   # For a quick explanation of cmake_parse_arguments(), see:
   # https://youtu.be/IZXNsim9TWI?t=1618
   cmake_parse_arguments(
-	parsed                           # Magic var prefix
+    parsed                           # Magic var prefix
 
-	# Here we want an actual single argument containing semicolons, since this
-	# is what cmake_parse_arguments() expects as this argument.
-	"BUILD_DEPENDS;NO_BUILD_DEPENDS" # Options
+    # Here we want an actual single argument containing semicolons, since this
+    # is what cmake_parse_arguments() expects as this argument.
+    "BUILD_DEPENDS;NO_BUILD_DEPENDS" # Options
 
-	# Same here
-	"FIX_MAIN_TARGET;FIX_POSTFIX;CHECK_MAIN_TARGET;CHECK_POSTFIX;REF_COMMIT" # Single-value keywords
+    # Same here
+    "FIX_MAIN_TARGET;FIX_POSTFIX;CHECK_MAIN_TARGET;CHECK_POSTFIX;REF_COMMIT" # Single-value keywords
 
-	# Same here
-	"TARGETS;COMMAND"                # Multi-value keywords
+    # Same here
+    "TARGETS;COMMAND"                # Multi-value keywords
 
-	# Here we want to pass one argument per list item of ARGN (which is the
-	# list of arguments passed to *this* function past the last expected
+    # Here we want to pass one argument per list item of ARGN (which is the
+    # list of arguments passed to *this* function past the last expected
     # argument). So this variable expansion must not be inside a quoted string.
-	${ARGN})
+    ${ARGN})
 
   if(parsed_UNPARSED_ARGUMENTS)
-	message(FATAL_ERROR
-	  "Unrecognized argument(s): ${parsed_UNPARSED_ARGUMENTS}.")
+    message(FATAL_ERROR
+      "Unrecognized argument(s): ${parsed_UNPARSED_ARGUMENTS}.")
   endif()
 
   if(NOT DEFINED parsed_TARGETS)
-	message(FATAL_ERROR "TARGETS keyword missing.")
+    message(FATAL_ERROR "TARGETS keyword missing.")
   endif()
 
   foreach(tgt IN LISTS parsed_TARGETS)
-	if(NOT TARGET "${tgt}")
-	  message(FATAL_ERROR "Target \"${tgt}\" does not exist")
-	endif()
+    if(NOT TARGET "${tgt}")
+      message(FATAL_ERROR "Target \"${tgt}\" does not exist")
+    endif()
   endforeach()
 
   # Parse & sanitize BUILD_DEPENDS and NO_BUILD_DEPENDS
   if(parsed_NO_BUILD_DEPENDS OR parsed_BUILD_DEPENDS)
-	if(parsed_NO_BUILD_DEPENDS AND parsed_BUILD_DEPENDS)
-	  message(FATAL_ERROR
-		"Both BUILD_DEPENDS and NO_BUILD_DEPENDS were specified to "
+    if(parsed_NO_BUILD_DEPENDS AND parsed_BUILD_DEPENDS)
+      message(FATAL_ERROR
+        "Both BUILD_DEPENDS and NO_BUILD_DEPENDS were specified to "
         "AdeClangFormat.")
-	endif()
-	if(parsed_NO_BUILD_DEPENDS)
-	  set(BUILD_DEPENDS OFF)
-	else()
-	  set(BUILD_DEPENDS ON)
-	endif()
+    endif()
+    if(parsed_NO_BUILD_DEPENDS)
+      set(BUILD_DEPENDS OFF)
+    else()
+      set(BUILD_DEPENDS ON)
+    endif()
   else()
-	if(DEFINED ADE_CLANG_FORMAT_BUILD_DEPENDS AND NOT ADE_CLANG_FORMAT_BUILD_DEPENDS)
-	  set(BUILD_DEPENDS OFF)
-	else()
-	  set(BUILD_DEPENDS ON)
-	endif()
+    if(DEFINED ADE_CLANG_FORMAT_BUILD_DEPENDS AND NOT ADE_CLANG_FORMAT_BUILD_DEPENDS)
+      set(BUILD_DEPENDS OFF)
+    else()
+      set(BUILD_DEPENDS ON)
+    endif()
   endif()
 
   if(DEFINED parsed_CHECK_POSTFIX)
-	set(CHECK_POSTFIX "${parsed_FIX_POSTFIX}")
+    set(CHECK_POSTFIX "${parsed_FIX_POSTFIX}")
   else()
-	set(CHECK_POSTFIX "-formatcheck")
+    set(CHECK_POSTFIX "-formatcheck")
   endif()
 
   if(DEFINED parsed_CHECK_MAIN_TARGET)
-	set(CHECK_MAIN_TARGET ${parsed_CHECK_MAIN_TARGET})
+    set(CHECK_MAIN_TARGET ${parsed_CHECK_MAIN_TARGET})
   elseif(DEFINED ADE_CLANG_FORMAT_MAIN_TARGET)
-	set(CHECK_MAIN_TARGET ${ADE_CLANG_FORMAT_MAIN_TARGET})
+    set(CHECK_MAIN_TARGET ${ADE_CLANG_FORMAT_MAIN_TARGET})
   else()
-	set(CHECK_MAIN_TARGET formatcheck)
+    set(CHECK_MAIN_TARGET formatcheck)
   endif()
 
   if(DEFINED parsed_FIX_POSTFIX)
-	set(FIX_POSTFIX "${parsed_FIX_POSTFIX}")
+    set(FIX_POSTFIX "${parsed_FIX_POSTFIX}")
   else()
-	set(FIX_POSTFIX "-formatfix")
+    set(FIX_POSTFIX "-formatfix")
   endif()
 
   if(DEFINED parsed_FIX_MAIN_TARGET)
-	set(FIX_MAIN_TARGET ${parsed_FIX_MAIN_TARGET})
+    set(FIX_MAIN_TARGET ${parsed_FIX_MAIN_TARGET})
   elseif(DEFINED ADE_CLANG_FORMAT_MAIN_TARGET)
-	set(FIX_MAIN_TARGET ${ADE_CLANG_FORMAT_MAIN_TARGET})
+    set(FIX_MAIN_TARGET ${ADE_CLANG_FORMAT_MAIN_TARGET})
   else()
-	set(FIX_MAIN_TARGET formatfix)
+    set(FIX_MAIN_TARGET formatfix)
   endif()
 
   if("${format_type}" STREQUAL plain AND DEFINED ADE_CLANG_FORMAT)
-	message(DEPRECATION
+    message(DEPRECATION
       "Use of the ADE_CLANG_FORMAT variable is "
       "deprecated; use ADE_CLANG_FORMAT_PLAIN instead.")
   endif()
 
   if(DEFINED parsed_COMMAND)
-	set(COMMAND ${parsed_COMMAND})
+    set(COMMAND ${parsed_COMMAND})
   elseif("${format_type}" STREQUAL plain)
     if(DEFINED ADE_CLANG_FORMAT_PLAIN)
       set(COMMAND ${ADE_CLANG_FORMAT_PLAIN})
@@ -309,10 +309,10 @@ function(__ade_clang_format_targets_catchall format_type)
   elseif("${format_type}" STREQUAL git AND DEFINED ADE_CLANG_FORMAT_PLAIN)
     set(COMMAND ${ADE_CLANG_FORMAT_GIT})
   else()
-	message(VERBOSE
-	  "AdeClangFormat: COMMAND keyword missing and "
-	  "ADE_CLANG_FORMAT_PLAIN is undefined; format targets will not"
-	  "be created.")
+    message(VERBOSE
+      "AdeClangFormat: COMMAND keyword missing and "
+      "ADE_CLANG_FORMAT_PLAIN is undefined; format targets will not"
+      "be created.")
 
     # Do nothing; stop now without any side-effects.
     #
@@ -344,7 +344,7 @@ function(__ade_clang_format_targets_catchall format_type)
     # that these setups don't need this package installed. But still, we should
     # not make that decision here. Let's leave that decision to whoever uses
     # us; they know their setup better than we do.
-	return()
+    return()
   endif()
 
   if("${format_type}" STREQUAL plain)
@@ -366,36 +366,36 @@ function(__ade_clang_format_targets_catchall format_type)
   endif()
 
   if(NOT TARGET "${CHECK_MAIN_TARGET}")
-	message(VERBOSE "Creating main check target ${CHECK_MAIN_TARGET}.")
-	add_custom_target("${CHECK_MAIN_TARGET}"
-	  COMMENT "Running format check sub-targets.")
+    message(VERBOSE "Creating main check target ${CHECK_MAIN_TARGET}.")
+    add_custom_target("${CHECK_MAIN_TARGET}"
+      COMMENT "Running format check sub-targets.")
   endif()
 
   if(NOT TARGET "${FIX_MAIN_TARGET}")
-	message(VERBOSE "Creating main fix target ${FIX_MAIN_TARGET}.")
-	add_custom_target("${FIX_MAIN_TARGET}"
-	  COMMENT "Running format fix sub-targets.")
+    message(VERBOSE "Creating main fix target ${FIX_MAIN_TARGET}.")
+    add_custom_target("${FIX_MAIN_TARGET}"
+      COMMENT "Running format fix sub-targets.")
   endif()
 
   foreach(tgt IN LISTS parsed_TARGETS)
-	set(format_check_tgt "${tgt}${CHECK_POSTFIX}")
-	set(format_fix_tgt "${tgt}${FIX_POSTFIX}")
+    set(format_check_tgt "${tgt}${CHECK_POSTFIX}")
+    set(format_fix_tgt "${tgt}${FIX_POSTFIX}")
 
-	__ade_clang_format_check_target(
+    __ade_clang_format_check_target(
       "${format_type}"
-	  "${tgt}"
-	  "${format_check_tgt}"
-	  "${COMMAND}"
-	  "${CHECK_MAIN_TARGET}"
-	  "${BUILD_DEPENDS}"
+      "${tgt}"
+      "${format_check_tgt}"
+      "${COMMAND}"
+      "${CHECK_MAIN_TARGET}"
+      "${BUILD_DEPENDS}"
       "${REF_COMMIT}")
 
-	__ade_clang_format_fix_target(
+    __ade_clang_format_fix_target(
       "${format_type}"
-	  "${tgt}"
-	  "${format_fix_tgt}"
-	  "${COMMAND}"
-	  "${FIX_MAIN_TARGET}"
+      "${tgt}"
+      "${format_fix_tgt}"
+      "${COMMAND}"
+      "${FIX_MAIN_TARGET}"
       "${REF_COMMIT}")
   endforeach()
 endfunction()

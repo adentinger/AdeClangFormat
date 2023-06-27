@@ -1,17 +1,17 @@
 {
-	"version": 3,
-	"cmakeMinimumRequired": {
-		"major": 3,
-		"minor": 19
-	},
-	"configurePresets": [
-		{
-			"name": "default",
-			"displayName": "Default",
-			"description": "Default build preset.",
-			"binaryDir": "build",
-			"installDir": "install"
-		}
-	]
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default",
+      "description": "Default build preset.",
+      "binaryDir": "build",
+      "installDir": "install"
+    }
+  ]
 }
 
