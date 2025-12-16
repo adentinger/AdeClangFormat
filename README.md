@@ -1,5 +1,7 @@
 # AdeClangFormat
 
+***Deprecation notice:*** This repo is no longer maintained. Rather than formatting parts of files, we now recommend [mass reformatting](https://discourse.cmake.org/t/good-way-of-running-custom-commands-serially/8412/8?u=anthonyd973). The version of `clang-format` used for the formatting of projets usually doesn't need to change often, and reformatting commits can be added to a [`.git-blame-ignore-revs` file placed at the root of the repository](https://github.blog/changelog/2022-03-23-ignore-commits-in-the-blame-view-beta) to be ignored in both GitHub and GitLab's web GUIs.
+
 This CMake module is a simple, scalable and pragmatic helper for running either `git-clang-format` or `clang-format` in the context of a CMake build.
 
 ## Rationale of this repo
